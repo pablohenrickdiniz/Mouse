@@ -44,12 +44,7 @@
         self.lastwheel = 0;
         self.lastmove = {x:0,y:0};
         self.mousewheel = [];
-    };
-
-
-    MouseReader.prototype.initialize = function () {
-        var self = this;
-        var mousemove = function(event){
+        self.mousemovecallback = function(event){
             event.preventDefault();
             var target = event.target;
             var x = event.offsetX;
@@ -60,7 +55,7 @@
             });
         };
 
-        var mousedown = function(event){
+        self.mousedowncallback=function(event){
             event.preventDefault();
             var pos = {x: event.offsetX, y: event.offsetY};
             self.lastdown.any = pos;
@@ -92,7 +87,7 @@
             }
         };
 
-        var mouseout = function(event){
+        self.mouseoutcallback =function(event){
             event.preventDefault();
             self.left = false;
             self.right = false;
@@ -102,14 +97,14 @@
             });
         };
 
-        var mouseenter = function(event){
+        self.mouseentercallback = function(event){
             event.preventDefault();
             self.mouseenter.forEach(function (callback) {
                 callback.apply(self, [event]);
             });
         };
 
-        var mousewheel = function(e){
+        self.mousewheelcallback = function(e){
             e.preventDefault();
             var wheel = e.detail ? e.detail * (-120) : e.wheelDelta;
             if(/Firefox/i.test(navigator.userAgent)){
@@ -121,7 +116,7 @@
             });
         };
 
-        var mouseup =  function (event) {
+        self.mouseupcallback = function (event) {
             event.preventDefault();
             event.stopPropagation();
             if (self.element !== null) {
@@ -156,19 +151,23 @@
             }
         };
 
-        var contextmenu = function(e){
+        self.contextmenucallback =  function(e){
             e.preventDefault();
         };
+    };
 
-        document.addEventListener("mouseup",mouseup);
-        self.element.addEventListener("mousemove",mousemove);
-        self.element.addEventListener("mousedown",mousedown);
-        self.element.addEventListener("mouseup",mouseup);
-        self.element.addEventListener("mouseout",mouseout);
-        self.element.addEventListener("mouseenter",mouseenter);
-        self.element.addEventListener("contextmenu",contextmenu);
+
+    MouseReader.prototype.initialize = function () {
+        var self = this;
+        document.addEventListener("mouseup",self.mouseupcallback);
+        self.element.addEventListener("mousemove",self.mousemovecallback);
+        self.element.addEventListener("mousedown",self.mousedowncallback);
+        self.element.addEventListener("mouseup",self.mouseupcallback);
+        self.element.addEventListener("mouseout",self.mouseoutcallback);
+        self.element.addEventListener("mouseenter",self.mouseentercallback);
+        self.element.addEventListener("contextmenu",self.contextmenucallback);
         var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel";
-        self.element.addEventListener(mousewheelevt,mousewheel);
+        self.element.addEventListener(mousewheelevt,self.mousewheelcallback);
     };
 
     MouseReader.prototype.setElement = function(element){
@@ -178,14 +177,14 @@
         var self = this;
         if(self.element != null){
             var old = self.element;
-            old.removeEventListener("mousemove",mousemove);
-            old.removeEventListener("mousedown",mousedown);
-            old.removeEventListener("mouseout",mouseout);
-            old.removeEventListener("mouseenter",mouseenter);
-            old.removeEventListener("mouseup",mouseup);
+            old.removeEventListener("mousemove",self.mousemovecallback);
+            old.removeEventListener("mousedown",self.mousedowncallback);
+            old.removeEventListener("mouseout",self.mouseoutcallback);
+            old.removeEventListener("mouseenter",self.mouseentercallback);
+            old.removeEventListener("mouseup",self.mouseupcallback);
             var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel";
-            old.removeEventListener(mousewheelevt,mousewheel);
-            old.removeEventListener("contextmenu",contextmenu);
+            old.removeEventListener(mousewheelevt,self.mousewheelcallback);
+            old.removeEventListener("contextmenu",self.contextmenucallback);
         }
 
         self.element = element;
