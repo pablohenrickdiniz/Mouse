@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt_BR">
+<head>
+    <meta charset="UTF-8">
+    <title>TESTE</title>
+    <script type="text/javascript" src="../plugins/phydokz/app-object/app-object.js"></script>
+    <script type="text/javascript" src="../src/mouse-reader.js"></script>
+    <script type="text/javascript">
+        function start(){
+            var element = document.getElementById('container');
+            var context = element.getContext('2d');
+            var reader = new MouseReader(element);
+            reader.onmousedown(function(){
+                document.getElementById('left-button').innerHTML = true;
+            },'left');
+
+            reader.onmouseup(function(){
+                document.getElementById('left-button').innerHTML = false;
+            },'left');
+
+            reader.onmousedown(function(){
+                document.getElementById('right-button').innerHTML = true;
+            },'right');
+
+            reader.onmouseup(function(){
+                document.getElementById('right-button').innerHTML = false;
+            },'right');
+
+            reader.onmousedown(function(){
+                document.getElementById('middle-button').innerHTML = true;
+            },'middle');
+
+            reader.onmouseup(function(){
+                document.getElementById('middle-button').innerHTML = false;
+            },'middle');
+
+            reader.onmousemove(function(x,y){
+                document.getElementById('x').innerHTML = x;
+                document.getElementById('y').innerHTML = y;
+                context.clearRect(0,0,element.width, element.height);
+                context.beginPath();
+                context.moveTo(0,y);
+                context.lineTo(element.width,y);
+                context.stroke();
+
+                context.beginPath();
+                context.moveTo(x,0);
+                context.lineTo(x,element.height);
+                context.stroke();
+            });
+
+            reader.onmousewheel(function(delta){
+                document.getElementById('wheel').innerHTML = delta;
+            });
+        }
+    </script>
+</head>
+<body onload="start()">
+    <canvas id="container" style="border: 1px solid blue" width="400" height="400"></canvas>
+    <br>
+    <table style="text-align: left;">
+        <tr>
+            <th>left button:</th>
+            <td id="left-button">false</td>
+        </tr>
+        <tr>
+            <th>middle button:</th>
+            <td id="middle-button">false</td>
+        </tr>
+        <tr>
+            <th>right button:</th>
+            <td id="right-button">false</td>
+        </tr>
+        <tr>
+            <th>position:</th>
+            <td><span id="x">0</span>,<span id="y">0</span></td>
+        </tr>
+        <tr>
+            <th>wheel:</th>
+            <td id="wheel">0</td>
+        </tr>
+    </table>
+</body>
+</html>

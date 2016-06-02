@@ -1,7 +1,12 @@
 (function(window){
-    var AppObject = window.AppObject;
+    var remove_from_array = function(array,object){
+        var index = array.indexOf(object);
+        if(index != -1){
+            array.splice(index,1);
+        }
+    };
 
-    var MouseReader = function (properties) {
+    var MouseReader = function (element) {
         var self = this;
         self.leftdown = [];
         self.rightdown = [];
@@ -12,185 +17,271 @@
         self.mousemove = [];
         self.mouseout = [];
         self.mouseenter = [];
+        self.mousedown = [];
+        self.mouseup = [];
         self.element = null;
-        self.initialize();
-        AppObject.call(self);
-        MouseReader.bindProperties.apply(self);
-        self.set(properties);
+        self.initializeVars();
+        self.setElement(element);
     };
-
-    MouseReader.prototype = Object.create(AppObject.prototype);
-    MouseReader.prototype.constructor = MouseReader;
-
-    MouseReader.bindProperties = function () {
-        var self = this;
-        self._beforeSet('element', function (oldVal, newVal) {
-            $(oldVal).unbind('mousemove');
-            $(oldVal).unbind('mousedown');
-            $(oldVal).unbind('mousewheel');
-            $(oldVal).unbind('mouseout');
-            $(oldVal).unbind('mouseenter');
-
-            return newVal;
-        });
-
-        self._onChange('element', function (element) {
-            self.initializeVars();
-            $(element).on('mousemove',function (event) {
-                event.preventDefault();
-                var target = event.target;
-                var x = event.offsetX;
-                var y = event.offsetY;
-                self.lastMove = {x: x, y: y};
-                self.mousemove.forEach(function (callback) {
-                    callback.apply(self, [event]);
-                });
-            });
-
-            $(element).on('mousedown',function (event) {
-                event.preventDefault();
-                var pos = {x: event.offsetX, y: event.offsetY};
-                switch (event.which) {
-                    case 1:
-                        self.left = true;
-                        self.lastDown.left = pos;
-                        self.leftdown.forEach(function (callback) {
-                            callback.apply(self, [event]);
-                        });
-                        break;
-                    case 2:
-                        self.middle = true;
-                        self.lastDown.middle = pos;
-                        self.middledown.forEach(function (callback) {
-                            callback.apply(self, [event]);
-                        });
-                        break;
-                    case 3:
-                        self.right = true;
-                        self.lastDown.right = pos;
-                        self.rightdown.forEach(function (callback) {
-                            callback.apply(self, [event]);
-                        });
-                }
-
-            });
-
-            $(element).on('mouseout',function (event) {
-                event.preventDefault();
-                self.left = false;
-                self.right = false;
-                self.middle = false;
-                self.mouseout.forEach(function (callback) {
-                    callback.apply(self, [event]);
-                });
-            });
-
-            $(element).on('mouseenter',function (event) {
-                event.preventDefault();
-                self.mouseenter.forEach(function (callback) {
-                    callback.apply(self, [event]);
-                });
-            });
-
-            var callback = function (e) {
-                e.preventDefault();
-                self.lastWheel = e.detail ? e.detail * (-120) : e.wheelDelta;
-                self.mouseWheel.forEach(function (callback) {
-                    callback.apply(self, [e]);
-                });
-            };
-
-            var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel";
-
-            $(element).on(mousewheelevt,callback);
-        });
-    };
-
 
     MouseReader.prototype.initializeVars = function () {
         var self = this;
         self.left = false;
         self.middle = false;
         self.right = false;
-        self.lastDown = {
+        self.lastdown = {
             left: {x: 0, y: 0},
             right: {x: 0, y: 0},
-            middle: {x: 0, y: 0}
+            middle: {x: 0, y: 0},
+            any:{x:0,y:0}
         };
-        self.lastUp = {
+        self.lastup = {
             left: {x: 0, y: 0},
             right: {x: 0, y: 0},
-            middle: {x: 0, y: 0}
+            middle: {x: 0, y: 0},
+            any:{x:0,y:0}
         };
-        self.lastMove = {x: 0, y: 0};
-        self.lastWheel = 0;
-        self.mouseWheel = [];
+        self.lastwheel = 0;
+        self.lastmove = {x:0,y:0};
+        self.mousewheel = [];
     };
 
 
     MouseReader.prototype.initialize = function () {
         var self = this;
-        self.initializeVars();
-        $(document).mouseup(function (event) {
+        var mousemove = function(event){
             event.preventDefault();
+            var target = event.target;
+            var x = event.offsetX;
+            var y = event.offsetY;
+
+            self.mousemove.forEach(function (callback) {
+                callback.apply(self,[x,y,event]);
+            });
+        };
+
+        var mousedown = function(event){
+            event.preventDefault();
+            var pos = {x: event.offsetX, y: event.offsetY};
+            self.lastdown.any = pos;
+            self.mousedown.forEach(function(callback){
+                callback.apply(self, [pos.x,pos.y,event]);
+            });
+
+            switch (event.which) {
+                case 1:
+                    self.left = true;
+                    self.lastdown.left = pos;
+                    self.leftdown.forEach(function (callback) {
+                        callback.apply(self, [pos.x, pos.y,event]);
+                    });
+                    break;
+                case 2:
+                    self.middle = true;
+                    self.lastdown.middle = pos;
+                    self.middledown.forEach(function (callback) {
+                        callback.apply(self, [pos.x, pos.y,event]);
+                    });
+                    break;
+                case 3:
+                    self.right = true;
+                    self.lastdown.right = pos;
+                    self.rightdown.forEach(function (callback) {
+                        callback.apply(self, [pos.x,pos.y,event]);
+                    });
+            }
+        };
+
+        var mouseout = function(event){
+            event.preventDefault();
+            self.left = false;
+            self.right = false;
+            self.middle = false;
+            self.mouseout.forEach(function (callback) {
+                callback.apply(self, [event]);
+            });
+        };
+
+        var mouseenter = function(event){
+            event.preventDefault();
+            self.mouseenter.forEach(function (callback) {
+                callback.apply(self, [event]);
+            });
+        };
+
+        var mousewheel = function(e){
+            e.preventDefault();
+            var wheel = e.detail ? e.detail * (-120) : e.wheelDelta;
+            if(/Firefox/i.test(navigator.userAgent)){
+                wheel = (wheel / 360)*120;
+            }
+            self.lastwheel = wheel;
+            self.mousewheel.forEach(function (callback) {
+                callback.apply(self, [wheel,e]);
+            });
+        };
+
+        var mouseup =  function (event) {
+            event.preventDefault();
+            event.stopPropagation();
             if (self.element !== null) {
                 var pos = {x: event.offsetX, y: event.offsetY};
+                self.lastup.any = pos;
+                self.mouseup.forEach(function (callback) {
+                    callback.apply(self, [pos.x,pos.y,event]);
+                });
+
                 switch (event.which) {
                     case 1:
                         self.left = false;
-                        self.lastUp.left = pos;
+                        self.lastup.left = pos;
                         self.leftup.forEach(function (callback) {
-                            callback.apply(self, [event]);
+                            callback.apply(self, [pos.x,pos.y,event]);
                         });
                         break;
                     case 2:
                         self.middle = false;
-                        self.lastUp.middle = pos;
+                        self.lastup.middle = pos;
                         self.middleup.forEach(function (callback) {
-                            callback.apply(self, [event]);
+                            callback.apply(self, [pos.x,pos.y,event]);
                         });
                         break;
                     case 3:
                         self.right = false;
-                        self.lastUp.right = pos;
+                        self.lastup.right = pos;
                         self.rightup.forEach(function (callback) {
-                            callback.apply(self, [event]);
+                            callback.apply(self, [pos.x,pos.y,event]);
                         });
                 }
             }
-        });
+        };
+
+        var contextmenu = function(e){
+            e.preventDefault();
+        };
+
+        document.addEventListener("mouseup",mouseup);
+        self.element.addEventListener("mousemove",mousemove);
+        self.element.addEventListener("mousedown",mousedown);
+        self.element.addEventListener("mouseup",mouseup);
+        self.element.addEventListener("mouseout",mouseout);
+        self.element.addEventListener("mouseenter",mouseenter);
+        self.element.addEventListener("contextmenu",contextmenu);
+        var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel";
+        self.element.addEventListener(mousewheelevt,mousewheel);
+    };
+
+    MouseReader.prototype.setElement = function(element){
+        if(!(element instanceof Element)){
+            throw new TypeError('Elemento inexistente!');
+        }
+        var self = this;
+        if(self.element != null){
+            var old = self.element;
+            old.removeEventListener("mousemove",mousemove);
+            old.removeEventListener("mousedown",mousedown);
+            old.removeEventListener("mouseout",mouseout);
+            old.removeEventListener("mouseenter",mouseenter);
+            old.removeEventListener("mouseup",mouseup);
+            var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel";
+            old.removeEventListener(mousewheelevt,mousewheel);
+            old.removeEventListener("contextmenu",contextmenu);
+        }
+
+        self.element = element;
+        self.initialize();
+    };
+
+    MouseReader.prototype.removemousewheel = function(callback){
+        var self = this;
+        remove_from_array(self.mousewheel,callback);
+    };
+
+    MouseReader.prototype.removemousedown = function(callback,type){
+        var self = this;
+        switch(type){
+            case 'left':
+                remove_from_array(self.leftdown,callback);
+                break;
+            case 'middle':
+                remove_from_array(self.middledown,callback);
+                break;
+            case 'right':
+                remove_from_array(self.rightdown,callback);
+                break;
+            default:
+                remove_from_array(self.mousedown,callback);
+        }
+    };
+
+    MouseReader.prototype.removemouseup =function(callback,type){
+        var self =this;
+        switch(type){
+            case 'left':
+                remove_from_array(self.leftup,callback);
+                break;
+            case 'middle':
+                remove_from_array(self.middleup,callback);
+                break;
+            case 'right':
+                remove_from_array(self.rightup,callback);
+                break;
+            default:
+                remove_from_array(self.mouseup,callback);
+        }
+    };
+
+    MouseReader.prototype.removemousemove = function(callback){
+        var self = this;
+        remove_from_array(self.mousemove,callback);
+    };
+
+    MouseReader.prototype.removemouseenter = function(callback){
+        var self= this;
+        remove_from_array(self.mouseenter,callback);
+    };
+
+    MouseReader.prototype.removemouseout = function(callback){
+        var self = this;
+        remove_from_array(self.mouseout,callback);
     };
 
     MouseReader.prototype.onmousewheel = function (callback) {
         var self = this;
-        self.mouseWheel.push(callback);
+        self.mousewheel.push(callback);
     };
 
-    MouseReader.prototype.onmousedown = function (which, callback) {
+    MouseReader.prototype.onmousedown = function (callback,type) {
         var self = this;
-        switch (which) {
-            case 1:
+        switch (type) {
+            case 'left':
                 self.leftdown.push(callback);
                 break;
-            case 2:
+            case 'middle':
                 self.middledown.push(callback);
                 break;
-            case 3:
+            case 'right':
                 self.rightdown.push(callback);
+                break;
+            default:
+                self.mousedown.push(callback);
         }
     };
 
-    MouseReader.prototype.onmouseup = function (which, callback) {
+    MouseReader.prototype.onmouseup = function (callback,type) {
         var self = this;
-        switch (which) {
-            case 1:
+        switch (type) {
+            case 'left':
                 self.leftup.push(callback);
                 break;
-            case 2:
+            case 'middle':
                 self.middleup.push(callback);
                 break;
-            case 3:
+            case 'right':
                 self.rightup.push(callback);
+                break;
+            default:
+                self.mouseup.push(callback);
         }
     };
 
@@ -208,10 +299,6 @@
         var self = this;
         self.mouseenter.push(callback);
     };
-
-    MouseReader.LEFT = 1;
-    MouseReader.MIDDLE = 2;
-    MouseReader.RIGHT = 3;
 
     window.MouseReader = MouseReader;
 })(window);
