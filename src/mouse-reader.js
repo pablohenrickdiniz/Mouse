@@ -49,7 +49,7 @@
             var target = event.target;
             var x = event.offsetX;
             var y = event.offsetY;
-
+            self.lastmove =   {x:x,y:y};
             self.mousemove.forEach(function (callback) {
                 callback.apply(self,[x,y,event]);
             });
