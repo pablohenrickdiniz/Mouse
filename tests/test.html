@@ -3,38 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>TESTE</title>
-    <script type="text/javascript" src="../plugins/phydokz/app-object/app-object.js"></script>
-    <script type="text/javascript" src="../src/mouse-reader.js"></script>
+    <script type="text/javascript" src="../src/mouse.js"></script>
     <script type="text/javascript">
         function start(){
             var element = document.getElementById('container');
             var context = element.getContext('2d');
-            var reader = new MouseReader(element);
-            reader.onmousedown(function(){
-                document.getElementById('left-button').innerHTML = true;
-            },'left');
+            var reader = new Mouse(element);
 
-            reader.onmouseup(function(){
-                document.getElementById('left-button').innerHTML = false;
-            },'left');
+            var active = function(){
+                document.getElementById('left-button').innerHTML = reader.left;
+                document.getElementById('right-button').innerHTML = reader.right;
+                document.getElementById('middle-button').innerHTML = reader.middle;
+            };
 
-            reader.onmousedown(function(){
-                document.getElementById('right-button').innerHTML = true;
-            },'right');
+            reader.addEventListener('mousedown',active);
+            reader.addEventListener('mouseup',active);
+            window.addEventListener('blur',active);
 
-            reader.onmouseup(function(){
-                document.getElementById('right-button').innerHTML = false;
-            },'right');
-
-            reader.onmousedown(function(){
-                document.getElementById('middle-button').innerHTML = true;
-            },'middle');
-
-            reader.onmouseup(function(){
-                document.getElementById('middle-button').innerHTML = false;
-            },'middle');
-
-            reader.onmousemove(function(x,y){
+            reader.addEventListener('mousemove',function(x,y){
                 document.getElementById('x').innerHTML = x;
                 document.getElementById('y').innerHTML = y;
                 context.clearRect(0,0,element.width, element.height);
@@ -49,7 +35,7 @@
                 context.stroke();
             });
 
-            reader.onmousewheel(function(delta){
+            reader.addEventListener('mousewheel',function(delta){
                 document.getElementById('wheel').innerHTML = delta;
             });
         }
