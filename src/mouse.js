@@ -101,9 +101,7 @@
 
         function mouseenter(event){
             event.preventDefault();
-            if(self.listeners['mouseenter'] != undefined){
-                call_events(self.listeners['mouseenter'],self, [event]);
-            }
+            self.trigger('mouseenter',[event]);
         }
 
         function mousewheel(e){
@@ -113,9 +111,7 @@
                 wheel = (wheel / 360)*120;
             }
             lastWheel = wheel;
-            if(self.listeners['mousewheel'] != undefined){
-                call_events(self.listeners['mousewheel'],self, [wheel,e]);
-            }
+            self.trigger('mousewheel',[wheel,e]);
         }
 
         function mouseout(event){
