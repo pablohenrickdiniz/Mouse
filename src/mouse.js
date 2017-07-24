@@ -258,6 +258,5 @@
         });
     }
 
-
     w.Mouse = Mouse;
 })(window);
